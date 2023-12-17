@@ -5,6 +5,8 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -13,9 +15,16 @@ import java.util.stream.Collectors;
 
 public class AddressBook {
     private final List<Contact> contacts;
+    private Connection connection;
+    AddressBookJDBC addressBookJDBC = new AddressBookJDBC();
 
     public AddressBook() {
         this.contacts = new ArrayList<>();
+        try {
+            this.connection = addressBookJDBC.connectionManager();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public void addContact(Contact contact) {
@@ -23,11 +32,14 @@ public class AddressBook {
             System.out.println("Contact already exists.");
         } else {
             this.contacts.add(contact);
+            addressBookJDBC.addContact(contact.getFirstName() + " " + contact.getLastName(), contact.getAddress(),
+                    contact.getCity(), contact.getState(), contact.getZip());
         }
     }
 
     public void editContact(String firstName, String lastName, String newAddress, String newCity, String newState,
             String newZip, String newPhoneNumber, String newEmail) {
+        addressBookJDBC.updateContact(firstName + " " + lastName, newAddress, newCity, newState, newZip);
         for (Contact contact : this.contacts) {
             if (contact.getFirstName().equals(firstName) && contact.getLastName().equals(lastName)) {
                 contact.setAddress(newAddress);
@@ -55,6 +67,10 @@ public class AddressBook {
 
     public List<Contact> getContacts() {
         return this.contacts;
+    }
+
+    public void getContactsFromDB() {
+        addressBookJDBC.retrieveAllEntries();
     }
 
     public Contact getContact(int index) {
